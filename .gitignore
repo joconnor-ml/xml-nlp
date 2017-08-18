@@ -1,0 +1,5 @@
+*.xml
+*#
+*~
+.env/
+.ipynb_checkpoints/
