@@ -15,7 +15,7 @@ from sklearn.decomposition import TruncatedSVD
 ########### define optional parameters here ##########
 preprocessing = "lemmatize"  # "stem"
 n_words_to_select = 100
-
+######################################################
 
 # for writing output
 def to_xml(df, name):
@@ -62,29 +62,39 @@ for tag in ["Subject", "Body"]:
     text_strings = [" ".join(words) for words in texts]
     text_string = " ".join(text_strings)
   
+    # calculate TF-IDF scores
     tfidf_vect = TfidfVectorizer()
+    # sum over all documents to get importance score for each word
     tfidf = tfidf_vect.fit_transform(text_strings).toarray().sum(axis=0)
     tfidf_terms = tfidf_vect.get_feature_names()
-    
+
+    # count terms in each document
     count_vect = CountVectorizer()
     count = count_vect.fit_transform(text_strings).toarray()
+    # sum them up across all documents
     total_counts = count.sum(axis=0)
     count_terms = count_vect.get_feature_names()
-    
+
+    # perform LSA:
     lsa = TruncatedSVD(n_words_to_select)
     lsa.fit_transform(count)
+    
+    # get largest component from each LSA vector
     lsa_vectors = lsa.components_
     top_components = [count_terms[vector.argmax()] for vector in lsa_vectors]
-    
+
+    # put terms, counts and TF-IDF scores into a dataframe to make writing out the results easier
     output = pd.DataFrame({"term": count_terms, "occurence": total_counts})
     output.index = output["term"]
     output["TF-IDF"] = tfidf
-    
-    output.nlargest(100, "TF-IDF")[["occurence"]].to_csv("TF_{}.csv".format(tag))
-    to_xml(output.nlargest(100, "TF-IDF")[["occurence"]],
+
+    # pick top scoring TF-IDF terms, write to file (CSV and XML)
+    output.nlargest(n_words_to_select, "TF-IDF")[["occurence"]].to_csv("TF_{}.csv".format(tag))
+    to_xml(output.nlargest(n_words_to_select, "TF-IDF")[["occurence"]],
            "TF_{}.xml".format(tag))
 
+    # select top LDA components, write to file (CSV and XML)
     output.loc[top_components, ["occurence"]].to_csv("LSA_{}.csv".format(tag))
     to_xml(output.loc[top_components, ["occurence"]],
            "LSA_{}.xml".format(tag))
-    
+
