@@ -9,8 +9,12 @@ from nltk.stem import WordNetLemmatizer
 nltk.download("all", quiet=True)
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.decomposition import TruncatedSVD
 
+########### define optional parameters here ##########
 preprocessing = "lemmatize"  # "stem"
+n_words_to_select = 100
+
 
 with open("MsgLog_2017-01-24-011347.xml", "rt") as f:
     s = f.read()
@@ -49,15 +53,23 @@ for tag in ["Subject", "Body"]:
     text_strings = [" ".join(words) for words in texts]
     text_string = " ".join(text_strings)
   
-    vect = TfidfVectorizer()
-    tfidf = vect.fit_transform([text_string]).toarray().flatten()
-    tfidf_terms = vect.get_feature_names()
+    tfidf_vect = TfidfVectorizer()
+    tfidf = tfidf_vect.fit_transform([text_strings]).sum(axis=0)
+    tfidf_terms = tfidf_vect.get_feature_names()
 
-    vect = CountVectorizer()
-    count = vect.fit_transform([text_string]).toarray().flatten()
-    count_terms = vect.get_feature_names()
+    count_vect = CountVectorizer()
+    count = count_vect.fit_transform([text_string])
+    total_counts = count.sum(axis=0)
+    count_terms = count_vect.get_feature_names()
+
+    lsa = TruncatedSVD(n_words_to_select)
+    lsa.fit_transform(count)
+    lsa_vectors = lsa.components_
+    top_components = [count_terms[vector.argmax()] for vector in lsa_vectors]
     
     output = pd.DataFrame({"term": count_terms, "occurence": count})
     output.index = output["term"]
     output["TF-IDF"] = tfidf
-    output[["occurence", "TF-IDF"]].to_csv("TF_{}.csv".format(tag))
+
+    output.nlargest(100, "TF-IDF")[["occurence"]].to_csv("TF_{}.csv".format(tag))
+    output.loc[top_components, ["occurence"]].to_csv("LSA_{}.csv".format(tag))
