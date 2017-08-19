@@ -91,8 +91,6 @@ for tag in ["Subject", "Body"]:
             component = term_importance_map.index[i]
         top_components.append(component)
 
-    print(top_components[:10])
-
     # put terms, counts and TF-IDF scores into a dataframe to make writing out the results easier
     output = pd.DataFrame({"term": count_terms, "occurence": total_counts})
     output.index = output["term"]
