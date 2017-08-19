@@ -83,7 +83,7 @@ for tag in ["Subject", "Body"]:
     lsa_vectors = lsa.components_
     top_components = []
     for vector in lsa_vectors:
-        term_importance_map = pd.Series(vector, index=count_terms).abs().sort_values(ascending=False)
+        term_importance_map = pd.Series(vector.flatten(), index=count_terms).abs().sort_values(ascending=False)
         i = 0
         component = term_importance_map.iloc[i]
         while component in top_components:
