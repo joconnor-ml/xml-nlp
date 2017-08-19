@@ -85,11 +85,13 @@ for tag in ["Subject", "Body"]:
     for vector in lsa_vectors:
         term_importance_map = pd.Series(vector.flatten(), index=count_terms).abs().sort_values(ascending=False)
         i = 0
-        component = term_importance_map.iloc[i]
+        component = term_importance_map.iloc[i].index
         while component in top_components:
             i += 1
-            component = term_importance_map.iloc[i]
+            component = term_importance_map.iloc[i].index
         top_components.append(component)
+
+    print(top_components[:10])
 
     # put terms, counts and TF-IDF scores into a dataframe to make writing out the results easier
     output = pd.DataFrame({"term": count_terms, "occurence": total_counts})
