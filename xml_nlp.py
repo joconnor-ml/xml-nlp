@@ -81,7 +81,15 @@ for tag in ["Subject", "Body"]:
     
     # get largest component from each LSA vector
     lsa_vectors = lsa.components_
-    top_components = [count_terms[vector.argmax()] for vector in lsa_vectors]
+    top_components = []
+    for vector in lsa_vectors:
+        term_importance_map = pd.Series(vector, index=count_terms).abs().sort_values(ascending=False)
+        i = 0
+        component = term_importance_map.iloc[i]
+        while component in top_components:
+            i += 1
+            component = term_importance_map.iloc[i]
+        top_components.append(component)
 
     # put terms, counts and TF-IDF scores into a dataframe to make writing out the results easier
     output = pd.DataFrame({"term": count_terms, "occurence": total_counts})
